@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>券商配置管理后台</title>
+<style>
+:root {
+  --bg: #f5f6f8;
+  --card-bg: #ffffff;
+  --border: #e2e4e9;
+  --text: #1a1d23;
+  --text-secondary: #6b7080;
+  --text-muted: #9ca0ad;
+  --primary: #4f6ef7;
+  --primary-hover: #3b5de7;
+  --danger: #e84a4a;
+  --danger-bg: #fef2f2;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --phone-bg: #1a1a1a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Header */
+.header {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header .back-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+.header .back-btn:hover { background: #f0f1f4; }
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.breadcrumb span.current { color: var(--text); font-weight: 500; }
+.breadcrumb .sep { color: var(--text-muted); margin: 0 2px; }
+
+/* Main wrapper - contains form+preview and published list */
+.page-wrapper {
+  min-height: calc(100vh - 109px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main layout (form + preview) */
+.main-container {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  max-width: 100%;
+  margin: 0;
+}
+
+/* Left form panel */
+.form-panel {
+  flex: 0 0 50%;
+  min-width: 0;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border);
+  padding: 28px 32px;
+}
+.form-panel h2 {
+  font-size: 16px; font-weight: 600;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.form-group { margin-bottom: 22px; }
+.form-group:last-child { margin-bottom: 0; }
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.form-label .required { color: var(--danger); font-size: 13px; }
+
+/* Select dropdown */
+.select-wrapper { position: relative; }
+.select-wrapper select { display: none; }
+.custom-select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  font-size: 14px;
+  background: var(--card-bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color 0.2s;
+  position: relative;
+}
+.custom-select:hover { border-color: var(--primary); }
+.custom-select.open { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,110,247,0.1); }
+.custom-select .placeholder { color: var(--text-muted); }
+.custom-select .selected-text { color: var(--text); }
+.custom-select .arrow { color: var(--text-muted); font-size: 12px; transition: transform 0.2s; }
+.custom-select.open .arrow { transform: rotate(180deg); }
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  z-index: 50;
+  max-height: 240px;
+  overflow: hidden;
+  display: none;
+}
+.dropdown-menu.show { display: block; }
+.dropdown-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.dropdown-search input {
+  width: 100%;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 13px;
+  outline: none;
+}
+.dropdown-search input:focus { border-color: var(--primary); }
+.dropdown-list { max-height: 180px; overflow-y: auto; }
+.dropdown-item {
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f0f0f3;
+}
+.dropdown-item:last-child { border-bottom: none; }
+.dropdown-item:hover { background: #f0f2ff; }
+.dropdown-item.selected { background: #eef0ff; color: var(--primary); font-weight: 500; }
+.dropdown-item.no-result { color: var(--text-muted); cursor: default; }
+.dropdown-item.no-result:hover { background: transparent; }
+
+/* Checkbox group */
+.checkbox-group { display: flex; gap: 20px; flex-wrap: wrap; }
+.checkbox-item {
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; font-size: 14px;
+}
+.checkbox-item input[type="checkbox"] {
+  width: 16px; height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.checkbox-item.has-error label { color: var(--danger); }
+
+/* Text input */
+.text-input-wrapper { position: relative; }
+.text-input-wrapper input {
+  width: 100%; height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 60px 0 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.text-input-wrapper input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,110,247,0.1); }
+.text-input-wrapper input.error { border-color: var(--danger); }
+.text-input-wrapper .char-count {
+  position: absolute;
+  right: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.text-input-wrapper .char-count.over { color: var(--danger); }
+
+/* Tag input */
+.tag-input-container {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px;
+  min-height: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  cursor: text;
+  transition: border-color 0.2s;
+}
+.tag-input-container:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,110,247,0.1); }
+.tag-input-container.error { border-color: var(--danger); }
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eef0ff;
+  color: var(--primary);
+  padding: 3px 10px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 22px;
+}
+.tag-badge .tag-close {
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: #8890d0;
+  margin-left: 2px;
+}
+.tag-badge .tag-close:hover { color: var(--danger); }
+.tag-input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  min-width: 80px;
+  flex: 1;
+  padding: 3px 2px;
+  background: transparent;
+}
+.tag-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* Effective time */
+.effective-time-wrap { margin-top: 4px; }
+.effective-radio-group {
+  display: flex; gap: 24px; margin-bottom: 10px;
+}
+.effective-radio-item {
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; font-size: 14px;
+}
+.effective-radio-item input[type="radio"] {
+  width: 16px; height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.effective-time-selectors {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.effective-time-selectors.hidden { display: none; }
+.time-select {
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 8px;
+  font-size: 14px;
+  background: var(--card-bg);
+  cursor: pointer;
+  outline: none;
+  min-width: 70px;
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+.time-select:focus { border-color: var(--primary); }
+.time-select.error { border-color: var(--danger); }
+.time-separator { color: var(--text-muted); font-size: 14px; }
+
+/* Validation error message */
+.field-error {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 4px;
+  display: none;
+}
+.field-error.show { display: block; }
+
+/* Right preview panel */
+.preview-panel {
+  flex: 0 0 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #e8eaef;
+  padding: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.preview-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+/* iPhone mockup */
+.iphone-frame {
+  width: min(80%, 380px);
+  aspect-ratio: 1 / 2;
+  background: var(--phone-bg);
+  border-radius: 44px;
+  padding: 3%;
+  position: relative;
+  box-shadow: 0 0 0 2px #2a2a2a, 0 0 0 4px #1a1a1a, 0 8px 32px rgba(0,0,0,0.25);
+}
+.iphone-notch {
+  width: 32%;
+  height: 28px;
+  background: #0a0a0a;
+  border-radius: 0 0 18px 18px;
+  position: absolute;
+  top: 3%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+.iphone-screen {
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border-radius: 30px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Phone screen header - card style */
+.phone-header {
+  background: #fff;
+  color: var(--text);
+  padding: 44px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.phone-header .header-top {
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.phone-header .header-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Card content */
+.phone-content {
+  flex: 1;
+  padding: 12px 16px;
+  overflow-y: auto;
+}
+
+/* Broker card */
+.broker-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.broker-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.broker-card-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.broker-card-info { flex: 1; min-width: 0; }
+.broker-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+.broker-card-name.empty { color: var(--text-muted); font-size: 15px; font-weight: 400; }
+.broker-card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  word-break: break-all;
+}
+.broker-card-desc.empty { color: var(--text-muted); font-style: italic; }
+.broker-card-desc.error-desc { color: var(--danger); }
+
+/* Card tags */
+.broker-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.card-tag {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  border: 1px solid #bbdefb;
+}
+.card-tag.error-tag {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+/* Card error hint */
+.card-error-hint {
+  font-size: 12px;
+  color: var(--danger);
+  text-align: center;
+  margin-top: 12px;
+  padding: 6px;
+  background: var(--danger-bg);
+  border-radius: var(--radius);
+  display: none;
+}
+.card-error-hint.show { display: block; }
+
+/* Refresh button inside phone */
+.phone-refresh-btn {
+  padding: 8px;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+.phone-refresh-btn button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  width: 100%;
+}
+.phone-refresh-btn button:hover { background: var(--primary-hover); }
+
+/* Bottom action bar */
+.action-bar {
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+}
+.btn {
+  height: 40px;
+  padding: 0 28px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-cancel {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+.btn-cancel:hover { background: #f0f1f4; }
+.btn-draft {
+  background: var(--card-bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-draft:hover { background: #f0f1f4; border-color: #ccc; }
+.btn-publish {
+  background: var(--primary);
+  color: white;
+  border: none;
+}
+.btn-publish:hover { background: var(--primary-hover); }
+.btn-publish:disabled {
+  background: #c4c8d5;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: white;
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  display: none;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  width: 420px;
+  max-width: 90vw;
+  box-shadow: var(--shadow-md);
+}
+.modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+.modal p { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+.modal-actions .btn { min-width: 80px; }
+
+@media (max-width: 1100px) {
+  .main-container { flex-direction: column; height: auto; }
+  .form-panel { flex: none; width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+  .preview-panel { flex: none; width: 100%; padding: 24px; }
+  .iphone-frame { width: min(70%, 380px); }
+}
+
+/* ====== Published Config List ====== */
+.published-section {
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  padding: 24px 32px;
+}
+.published-section h2 {
+  font-size: 16px; font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.published-section h2 .count {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.published-empty {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.published-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.published-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  transition: box-shadow 0.2s;
+}
+.published-item:hover { box-shadow: var(--shadow-sm); }
+.published-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.published-item-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.published-item-time {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.published-item-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+  margin-bottom: 12px;
+}
+.published-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.published-info-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.published-info-value {
+  font-size: 13px;
+  color: var(--text);
+}
+.published-info-value.channels {
+  display: flex;
+  gap: 4px;
+}
+.published-info-value .ch-tag {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 1px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.published-info-value .tag-badge-sm {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 1px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  display: inline-block;
+  margin: 1px 2px;
+}
+.published-item-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  border-top: 1px solid #f0f0f3;
+  padding-top: 10px;
+}
+.btn-sm {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-sm-edit {
+  background: var(--card-bg);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+.btn-sm-edit:hover { background: #eef0ff; }
+.btn-sm-delete {
+  background: var(--card-bg);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.btn-sm-delete:hover { background: var(--danger-bg); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <button class="back-btn" onclick="handleBack()" title="返回">←</button>
+  <div class="breadcrumb">
+    <span>配置管理</span>
+    <span class="sep">›</span>
+    <span>推广配置</span>
+    <span class="sep">›</span>
+    <span class="current">新建配置</span>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="page-wrapper">
+<div class="main-container">
+  <!-- Left: Form Panel -->
+  <div class="form-panel">
+    <h2>新建推广配置</h2>
+
+    <!-- 券商下拉选择 -->
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span> 券商</label>
+      <div class="select-wrapper" id="brokerSelectWrapper">
+        <div class="custom-select" id="brokerSelect" onclick="toggleDropdown()">
+          <span class="placeholder" id="brokerPlaceholder">请下拉选择</span>
+          <span class="selected-text" id="brokerSelectedText" style="display:none"></span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="dropdown-menu" id="brokerDropdown">
+          <div class="dropdown-search">
+            <input type="text" id="brokerSearch" placeholder="搜索券商..." oninput="filterBrokers()" onclick="event.stopPropagation()">
+          </div>
+          <div class="dropdown-list" id="brokerList"></div>
+        </div>
+      </div>
+      <div class="field-error" id="brokerError">请选择券商</div>
+    </div>
+
+    <!-- 渠道多选 -->
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span> 渠道</label>
+      <div class="checkbox-group" id="channelGroup">
+        <label class="checkbox-item">
+          <input type="checkbox" value="APP" onchange="onChannelChange()">
+          <span>APP</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" value="小程序" onchange="onChannelChange()">
+          <span>小程序</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" value="公众号" onchange="onChannelChange()">
+          <span>公众号</span>
+        </label>
+      </div>
+      <div class="field-error" id="channelError">请至少选择一个渠道</div>
+    </div>
+
+    <!-- 描述文案 -->
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span> 描述文案</label>
+      <div class="text-input-wrapper">
+        <input
+          type="text"
+          id="descInput"
+          maxlength="15"
+          placeholder="请输入描述文案"
+          oninput="onDescInput()"
+        >
+        <span class="char-count" id="charCount">0/15</span>
+      </div>
+      <div class="field-error" id="descError">描述文案不能为空且不能超过15字</div>
+    </div>
+
+    <!-- 标签输入 -->
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span> 标签</label>
+      <div class="tag-input-container" id="tagContainer" onclick="focusTagInput()">
+        <input
+          type="text"
+          class="tag-input"
+          id="tagInput"
+          placeholder="输入标签后回车添加"
+          onkeydown="onTagKeydown(event)"
+          oninput="onTagInput()"
+
+        >
+      </div>
+      <div class="tag-hint" id="tagHint">最多5个标签，回车添加</div>
+      <div class="field-error" id="tagError">至少添加1个标签</div>
+    </div>
+
+    <!-- 生效时间 -->
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span> 生效时间</label>
+      <div class="effective-time-wrap">
+        <div class="effective-radio-group">
+          <label class="effective-radio-item">
+            <input type="radio" name="effectiveType" value="immediate" checked onchange="onEffectiveTypeChange()">
+            <span>立即生效</span>
+          </label>
+          <label class="effective-radio-item">
+            <input type="radio" name="effectiveType" value="manual" onchange="onEffectiveTypeChange()">
+            <span>手动选择时间</span>
+          </label>
+        </div>
+        <div class="effective-time-selectors hidden" id="timeSelectors">
+          <select class="time-select" id="selYear" onchange="onTimeChange()"></select>
+          <span class="time-separator">年</span>
+          <select class="time-select" id="selMonth" onchange="onTimeChange()">
+            <option value="">月</option>
+          </select>
+          <span class="time-separator">月</span>
+          <select class="time-select" id="selDay" onchange="onTimeChange()">
+            <option value="">日</option>
+          </select>
+          <span class="time-separator">日</span>
+          <select class="time-select" id="selHour" onchange="onTimeChange()">
+            <option value="">时</option>
+          </select>
+          <span class="time-separator">:</span>
+          <select class="time-select" id="selMinute" onchange="onTimeChange()">
+            <option value="">分</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-error" id="timeError">请选择生效时间</div>
+    </div>
+  </div>
+
+  <!-- Right: Preview Panel -->
+  <div class="preview-panel">
+    <div class="preview-label">实时预览 — iPhone 14 Pro</div>
+    <div class="iphone-frame">
+      <div class="iphone-notch"></div>
+      <div class="iphone-screen">
+        <div class="phone-header">
+          <div class="header-top">
+            <span class="header-title">推广卡片预览</span>
+          </div>
+        </div>
+        <div class="phone-content">
+          <!-- Broker card -->
+          <div class="broker-card">
+            <div class="broker-card-header">
+              <div class="broker-card-icon" id="previewIcon">券</div>
+              <div class="broker-card-info">
+                <div class="broker-card-name empty" id="previewMerchant">请选择券商</div>
+                <div class="broker-card-desc empty" id="previewDesc">请输入描述文案</div>
+              </div>
+            </div>
+            <div class="broker-card-tags" id="previewTags">
+              <span style="font-size:12px;color:var(--text-muted)">暂无标签</span>
+            </div>
+          </div>
+          <!-- Error hint -->
+          <div class="card-error-hint" id="previewErrorHint">表单存在校验异常，请检查后刷新</div>
+        </div>
+        <div class="phone-refresh-btn">
+          <button onclick="refreshPreview()">刷新预览效果</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Published Config Management -->
+<div class="published-section" id="publishedSection">
+  <h2>发布配置管理 <span class="count" id="publishedCount">(0 条)</span></h2>
+  <div class="published-list" id="publishedList">
+    <div class="published-empty" id="publishedEmpty">暂无发布的配置，发布后展示在此处</div>
+  </div>
+</div>
+
+<!-- Bottom Action Bar -->
+<div class="action-bar">
+  <button class="btn btn-cancel" onclick="handleCancel()">取消</button>
+  <button class="btn btn-draft" onclick="handleSaveDraft()">保存草稿</button>
+  <button class="btn btn-publish" id="publishBtn" disabled onclick="handlePublish()">预览并发布</button>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="modalTitle">确认发布</h3>
+    <p id="modalMessage">请确认预览效果无误，发布后将立即生效。</p>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn btn-publish" id="modalConfirmBtn" onclick="confirmPublish()">确认发布</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== Data ======
+const BROKERS = [
+  '华泰证券', '中信证券', '国泰君安', '海通证券', '广发证券',
+  '招商证券', '申万宏源', '银河证券', '国信证券', '中信建投',
+  '东方证券', '兴业证券', '安信证券', '平安证券', '中金公司',
+  '光大证券', '方正证券', '长江证券', '中泰证券', '国金证券'
+];
+
+// ====== State ======
+let selectedBroker = null;
+let tags = [];
+let immediateEffective = true;
+let effectiveTime = { year: null, month: null, day: null, hour: null, minute: null };
+let publishedConfigs = [];
+let editingId = null; // null = new mode, string = editing existing config id
+
+// ====== Init ======
+function init() {
+  renderBrokerList(BROKERS);
+  initTimeSelectors();
+  loadPublishedConfigs();
+  renderPublishedList();
+  updatePublishBtn();
+  // Load draft if exists
+  loadDraft();
+}
+
+// ====== Broker Dropdown ======
+let isDropdownOpen = false;
+
+function toggleDropdown() {
+  isDropdownOpen = !isDropdownOpen;
+  const menu = document.getElementById('brokerDropdown');
+  const select = document.getElementById('brokerSelect');
+  if (isDropdownOpen) {
+    menu.classList.add('show');
+    select.classList.add('open');
+    document.getElementById('brokerSearch').value = '';
+    filterBrokers();
+    setTimeout(() => document.getElementById('brokerSearch').focus(), 50);
+  } else {
+    menu.classList.remove('show');
+    select.classList.remove('open');
+  }
+}
+
+function filterBrokers() {
+  const query = document.getElementById('brokerSearch').value.toLowerCase();
+  const filtered = BROKERS.filter(b => b.toLowerCase().includes(query));
+  renderBrokerList(filtered, query);
+}
+
+function renderBrokerList(list, query) {
+  const container = document.getElementById('brokerList');
+  if (list.length === 0) {
+    container.innerHTML = '<div class="dropdown-item no-result">无匹配券商</div>';
+    return;
+  }
+  container.innerHTML = list.map(b => {
+    const cls = b === selectedBroker ? 'dropdown-item selected' : 'dropdown-item';
+    return `<div class="${cls}" onclick="selectBroker('${b}')">${b}</div>`;
+  }).join('');
+}
+
+function selectBroker(name) {
+  selectedBroker = name;
+  document.getElementById('brokerPlaceholder').style.display = 'none';
+  const sel = document.getElementById('brokerSelectedText');
+  sel.style.display = 'block';
+  sel.textContent = name;
+  closeDropdown();
+  hideFieldError('brokerError');
+  syncPreview();
+  updatePublishBtn();
+}
+
+function closeDropdown() {
+  isDropdownOpen = false;
+  document.getElementById('brokerDropdown').classList.remove('show');
+  document.getElementById('brokerSelect').classList.remove('open');
+}
+
+// ====== Channel ======
+function onChannelChange() {
+  syncPreview();
+  updatePublishBtn();
+  const checks = getChannelEls();
+  const anyChecked = checks.some(cb => cb.checked);
+  if (anyChecked) hideFieldError('channelError');
+  // Update channel checkboxes error visual
+  checks.forEach(cb => {
+    const label = cb.closest('.checkbox-item');
+    if (!anyChecked) label.classList.add('has-error');
+    else label.classList.remove('has-error');
+  });
+}
+
+function getChannelEls() {
+  return Array.from(document.querySelectorAll('#channelGroup input[type="checkbox"]'));
+}
+
+function getSelectedChannels() {
+  return getChannelEls().filter(cb => cb.checked).map(cb => cb.value);
+}
+
+// ====== Description ======
+function onDescInput() {
+  const input = document.getElementById('descInput');
+  const count = document.getElementById('charCount');
+  const val = input.value;
+  const len = val.length;
+  count.textContent = len + '/15';
+  if (len >= 15) count.classList.add('over');
+  else count.classList.remove('over');
+
+  // Validate whitespace-only
+  if (val.trim().length === 0 && val.length > 0) {
+    input.classList.add('error');
+  } else {
+    input.classList.remove('error');
+    if (val.trim().length > 0) hideFieldError('descError');
+  }
+  syncPreview();
+  updatePublishBtn();
+}
+
+// ====== Tags ======
+function focusTagInput() {
+  document.getElementById('tagInput').focus();
+}
+
+function onTagKeydown(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addTag();
+  }
+  if (e.key === 'Backspace') {
+    const input = document.getElementById('tagInput');
+    if (input.value === '' && tags.length > 0) {
+      tags.pop();
+      renderTags();
+      syncPreview();
+      updatePublishBtn();
+    }
+  }
+}
+
+function onTagInput() {
+  updatePublishBtn();
+}
+
+function addTag() {
+  const input = document.getElementById('tagInput');
+  const val = input.value.trim();
+  if (val === '') return;
+  if (tags.includes(val)) {
+    showToast('标签已存在', 'error');
+    return;
+  }
+  if (tags.length >= 5) {
+    showToast('最多添加5个标签', 'error');
+    return;
+  }
+  tags.push(val);
+  input.value = '';
+  hideFieldError('tagError');
+  renderTags();
+  syncPreview();
+  updatePublishBtn();
+}
+
+function removeTag(index) {
+  tags.splice(index, 1);
+  renderTags();
+  syncPreview();
+  updatePublishBtn();
+}
+
+function renderTags() {
+  const container = document.getElementById('tagContainer');
+  const input = document.getElementById('tagInput');
+  // Remove existing badges
+  container.querySelectorAll('.tag-badge').forEach(el => el.remove());
+  // Add badges before input
+  tags.forEach((tag, i) => {
+    const badge = document.createElement('span');
+    badge.className = 'tag-badge';
+    badge.innerHTML = `${escapeHtml(tag)}<span class="tag-close" onclick="event.stopPropagation();removeTag(${i})">×</span>`;
+    container.insertBefore(badge, input);
+  });
+}
+
+// ====== Effective Time ======
+function initTimeSelectors() {
+  const now = new Date();
+  const yearSel = document.getElementById('selYear');
+  for (let y = now.getFullYear(); y <= now.getFullYear() + 3; y++) {
+    yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+  }
+  const monthSel = document.getElementById('selMonth');
+  for (let m = 1; m <= 12; m++) {
+    monthSel.innerHTML += `<option value="${m}">${m}</option>`;
+  }
+  const daySel = document.getElementById('selDay');
+  for (let d = 1; d <= 31; d++) {
+    daySel.innerHTML += `<option value="${d}">${d}</option>`;
+  }
+  const hourSel = document.getElementById('selHour');
+  for (let h = 0; h <= 23; h++) {
+    hourSel.innerHTML += `<option value="${h}">${String(h).padStart(2,'0')}</option>`;
+  }
+  const minSel = document.getElementById('selMinute');
+  for (let m = 0; m <= 59; m++) {
+    minSel.innerHTML += `<option value="${m}">${String(m).padStart(2,'0')}</option>`;
+  }
+}
+
+function onEffectiveTypeChange() {
+  const isImmediate = document.querySelector('input[name="effectiveType"]:checked').value === 'immediate';
+  immediateEffective = isImmediate;
+  const selDiv = document.getElementById('timeSelectors');
+  if (isImmediate) {
+    selDiv.classList.add('hidden');
+    hideFieldError('timeError');
+    resetTimeSelectors();
+  } else {
+    selDiv.classList.remove('hidden');
+  }
+  updatePublishBtn();
+}
+
+function onTimeChange() {
+  effectiveTime.year = document.getElementById('selYear').value || null;
+  effectiveTime.month = document.getElementById('selMonth').value || null;
+  effectiveTime.day = document.getElementById('selDay').value || null;
+  effectiveTime.hour = document.getElementById('selHour').value || null;
+  effectiveTime.minute = document.getElementById('selMinute').value !== '' ? parseInt(document.getElementById('selMinute').value) : null;
+  // Clear error styling on change
+  ['selYear','selMonth','selDay','selHour','selMinute'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.value) el.classList.remove('error');
+  });
+  if (effectiveTime.year && effectiveTime.month && effectiveTime.day && effectiveTime.hour && effectiveTime.minute !== null) {
+    hideFieldError('timeError');
+  }
+  updatePublishBtn();
+}
+
+function resetTimeSelectors() {
+  effectiveTime = { year: null, month: null, day: null, hour: null, minute: null };
+  ['selYear','selMonth','selDay','selHour','selMinute'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.classList.remove('error'); }
+  });
+}
+
+function restoreTimeSelectors() {
+  if (effectiveTime.year) document.getElementById('selYear').value = effectiveTime.year;
+  if (effectiveTime.month) document.getElementById('selMonth').value = effectiveTime.month;
+  if (effectiveTime.day) document.getElementById('selDay').value = effectiveTime.day;
+  if (effectiveTime.hour) document.getElementById('selHour').value = effectiveTime.hour;
+  if (effectiveTime.minute !== null) document.getElementById('selMinute').value = effectiveTime.minute;
+}
+
+// ====== Preview Sync ======
+function syncPreview() {
+  // Merchant name
+  const merchEl = document.getElementById('previewMerchant');
+  if (selectedBroker) {
+    merchEl.textContent = selectedBroker;
+    merchEl.classList.remove('empty');
+    // Update icon with first character of broker name
+    const icon = document.getElementById('previewIcon');
+    icon.textContent = selectedBroker.charAt(0);
+  } else {
+    merchEl.textContent = '请选择券商';
+    merchEl.classList.add('empty');
+    document.getElementById('previewIcon').textContent = '券';
+  }
+
+  // Tags
+  const tagsContainer = document.getElementById('previewTags');
+  if (tags.length > 0) {
+    tagsContainer.innerHTML = tags.map(t => {
+      return `<span class="card-tag">${escapeHtml(t)}</span>`;
+    }).join('');
+  } else {
+    tagsContainer.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">暂无标签</span>';
+  }
+
+  // Description
+  const descInput = document.getElementById('descInput');
+  const descVal = descInput.value;
+  const descEl = document.getElementById('previewDesc');
+  const hasDescError = descVal.trim() === '' || descVal.length > 15;
+  if (descVal.trim() !== '') {
+    descEl.textContent = descVal;
+    descEl.classList.remove('empty');
+    if (hasDescError) descEl.classList.add('error-desc');
+    else descEl.classList.remove('error-desc');
+  } else {
+    descEl.textContent = '请输入描述文案';
+    descEl.classList.add('empty');
+    descEl.classList.remove('error-desc');
+  }
+
+  // Error hint
+  updatePreviewErrorHint();
+}
+
+function updatePreviewErrorHint() {
+  const hintEl = document.getElementById('previewErrorHint');
+  const hasErrors = !isPublishEnabled();
+  if (hasErrors) hintEl.classList.add('show');
+  else hintEl.classList.remove('show');
+}
+
+function highlightPreviewErrors() {
+  // Tag errors
+  if (tags.length === 0) {
+    document.getElementById('previewTags').innerHTML = '<span style="font-size:12px;color:var(--danger)">请至少添加一个标签</span>';
+  }
+  // Description error
+  const descInput = document.getElementById('descInput');
+  const descVal = descInput.value;
+  const descEl = document.getElementById('previewDesc');
+  if (descVal.trim() === '' || descVal.length > 15) {
+    descEl.classList.add('error-desc');
+    descEl.textContent = descVal.trim() === '' ? '描述文案不能为空' : descVal;
+  }
+  updatePreviewErrorHint();
+}
+
+function refreshPreview() {
+  syncPreview();
+  highlightPreviewErrors();
+  showToast('预览已刷新', 'success');
+}
+
+// ====== Validation ======
+function isPublishEnabled() {
+  if (!selectedBroker) return false;
+  if (getSelectedChannels().length === 0) return false;
+  const descVal = document.getElementById('descInput').value;
+  if (descVal.trim() === '') return false;
+  if (descVal.length > 15) return false;
+  if (tags.length === 0) return false;
+  if (tags.length > 5) return false;
+  if (!immediateEffective) {
+    if (!effectiveTime.year || !effectiveTime.month || !effectiveTime.day || !effectiveTime.hour || effectiveTime.minute === null) return false;
+  }
+  return true;
+}
+
+function updatePublishBtn() {
+  const btn = document.getElementById('publishBtn');
+  btn.disabled = !isPublishEnabled();
+  if (isPublishEnabled()) {
+    hideFieldError('brokerError');
+    hideFieldError('channelError');
+    hideFieldError('descError');
+    hideFieldError('tagError');
+    hideFieldError('timeError');
+  }
+  updatePreviewErrorHint();
+}
+
+function validateAll() {
+  let valid = true;
+
+  // Broker
+  if (!selectedBroker) {
+    showFieldError('brokerError');
+    valid = false;
+  } else {
+    hideFieldError('brokerError');
+  }
+
+  // Channels
+  if (getSelectedChannels().length === 0) {
+    showFieldError('channelError');
+    getChannelEls().forEach(cb => {
+      cb.closest('.checkbox-item').classList.add('has-error');
+    });
+    valid = false;
+  } else {
+    hideFieldError('channelError');
+    getChannelEls().forEach(cb => {
+      cb.closest('.checkbox-item').classList.remove('has-error');
+    });
+  }
+
+  // Description
+  const descInput = document.getElementById('descInput');
+  const descVal = descInput.value;
+  if (descVal.trim() === '') {
+    showFieldError('descError');
+    descInput.classList.add('error');
+    valid = false;
+  } else if (descVal.length > 15) {
+    showFieldError('descError');
+    descInput.classList.add('error');
+    valid = false;
+  } else {
+    hideFieldError('descError');
+    descInput.classList.remove('error');
+  }
+
+  // Tags
+  if (tags.length === 0) {
+    showFieldError('tagError');
+    document.getElementById('tagContainer').classList.add('error');
+    valid = false;
+  } else if (tags.length > 5) {
+    showFieldError('tagError');
+    document.getElementById('tagContainer').classList.add('error');
+    valid = false;
+  } else {
+    hideFieldError('tagError');
+    document.getElementById('tagContainer').classList.remove('error');
+  }
+
+  // Effective time
+  if (!immediateEffective) {
+    const et = effectiveTime;
+    if (!et.year || !et.month || !et.day || !et.hour || et.minute === null) {
+      showFieldError('timeError');
+      ['selYear','selMonth','selDay','selHour','selMinute'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value) el.classList.add('error');
+      });
+      valid = false;
+    } else {
+      hideFieldError('timeError');
+      ['selYear','selMonth','selDay','selHour','selMinute'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('error');
+      });
+    }
+  } else {
+    hideFieldError('timeError');
+  }
+
+  return valid;
+}
+
+// ====== Field Error Helpers ======
+function showFieldError(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('show');
+}
+
+function hideFieldError(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
+}
+
+// ====== Published Config Management ======
+function loadPublishedConfigs() {
+  try {
+    const raw = localStorage.getItem('admin_published_configs');
+    if (raw) {
+      publishedConfigs = JSON.parse(raw);
+      // ensure ids
+      publishedConfigs.forEach(c => { if (!c.id) c.id = Date.now().toString() + Math.random(); });
+    }
+  } catch(e) { publishedConfigs = []; }
+}
+
+function savePublishedConfigs() {
+  localStorage.setItem('admin_published_configs', JSON.stringify(publishedConfigs));
+}
+
+function renderPublishedList() {
+  const list = document.getElementById('publishedList');
+  const count = document.getElementById('publishedCount');
+  count.textContent = `(${publishedConfigs.length} 条)`;
+
+  if (publishedConfigs.length === 0) {
+    list.innerHTML = '<div class="published-empty" id="publishedEmpty">暂无发布的配置，发布后展示在此处</div>';
+    return;
+  }
+
+  // Sort newest first
+  const sorted = [...publishedConfigs].reverse();
+  list.innerHTML = sorted.map(c => `
+    <div class="published-item">
+      <div class="published-item-header">
+        <span class="published-item-title">${escapeHtml(c.broker)}</span>
+        <span class="published-item-time">${escapeHtml(c.publishTime)}</span>
+      </div>
+      <div class="published-item-body">
+        <div class="published-info-item">
+          <span class="published-info-label">券商</span>
+          <span class="published-info-value">${escapeHtml(c.broker)}</span>
+        </div>
+        <div class="published-info-item">
+          <span class="published-info-label">渠道</span>
+          <span class="published-info-value channels">${c.channels.map(ch => `<span class="ch-tag">${escapeHtml(ch)}</span>`).join('')}</span>
+        </div>
+        <div class="published-info-item">
+          <span class="published-info-label">描述文案</span>
+          <span class="published-info-value">${escapeHtml(c.desc)}</span>
+        </div>
+        <div class="published-info-item">
+          <span class="published-info-label">标签</span>
+          <span class="published-info-value">${c.tags.map(t => `<span class="tag-badge-sm">${escapeHtml(t)}</span>`).join('')}</span>
+        </div>
+      </div>
+      <div class="published-item-actions">
+        <button class="btn-sm btn-sm-edit" onclick="editPublishedConfig('${c.id}')">✏️ 修改</button>
+        <button class="btn-sm btn-sm-delete" onclick="deletePublishedConfig('${c.id}')">🗑️ 删除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deletePublishedConfig(id) {
+  document.getElementById('modalTitle').textContent = '确认删除';
+  const cfg = publishedConfigs.find(c => c.id === id);
+  document.getElementById('modalMessage').textContent = cfg ? `确认删除「${cfg.broker}」的配置吗？删除后不可恢复。` : '确认删除该配置吗？';
+  document.getElementById('confirmModal').classList.add('show');
+  document.getElementById('modalConfirmBtn').textContent = '确认删除';
+  document.getElementById('modalConfirmBtn').onclick = function() {
+    publishedConfigs = publishedConfigs.filter(c => c.id !== id);
+    savePublishedConfigs();
+    renderPublishedList();
+    closeModal();
+    showToast('配置已删除', 'success');
+    // If editing the deleted config, reset
+    if (editingId === id) {
+      editingId = null;
+      document.querySelector('.form-panel h2').textContent = '新建推广配置';
+    }
+  };
+}
+
+function editPublishedConfig(id) {
+  const cfg = publishedConfigs.find(c => c.id === id);
+  if (!cfg) { showToast('配置不存在', 'error'); return; }
+
+  // Set editing mode
+  editingId = id;
+  document.querySelector('.form-panel h2').textContent = '编辑推广配置';
+
+  // Load config into form
+  // Broker
+  selectedBroker = cfg.broker;
+  document.getElementById('brokerPlaceholder').style.display = 'none';
+  const sel = document.getElementById('brokerSelectedText');
+  sel.style.display = 'block';
+  sel.textContent = cfg.broker;
+
+  // Channels
+  getChannelEls().forEach(cb => {
+    cb.checked = cfg.channels.includes(cb.value);
+  });
+
+  // Description
+  document.getElementById('descInput').value = cfg.desc;
+  document.getElementById('charCount').textContent = cfg.desc.length + '/15';
+
+  // Tags
+  tags = [...cfg.tags];
+  renderTags();
+
+  // Effective time
+  const et = cfg.effectiveTime;
+  if (et === '立即生效') {
+    immediateEffective = true;
+    document.querySelector('input[name="effectiveType"][value="immediate"]').checked = true;
+    document.getElementById('timeSelectors').classList.add('hidden');
+    resetTimeSelectors();
+  } else {
+    // Parse "YYYY-M-D HH:mm"
+    const match = et.match(/^(\d+)-(\d+)-(\d+) (\d+):(\d+)$/);
+    if (match) {
+      immediateEffective = false;
+      document.querySelector('input[name="effectiveType"][value="manual"]').checked = true;
+      document.getElementById('timeSelectors').classList.remove('hidden');
+      effectiveTime = {
+        year: match[1],
+        month: match[2],
+        day: match[3],
+        hour: match[4],
+        minute: parseInt(match[5])
+      };
+      restoreTimeSelectors();
+    }
+  }
+
+  // Clear errors and refresh
+  ['brokerError','channelError','descError','tagError','timeError'].forEach(hideFieldError);
+  document.getElementById('descInput').classList.remove('error');
+  document.getElementById('tagContainer').classList.remove('error');
+  syncPreview();
+  updatePublishBtn();
+
+  // Scroll to top of form
+  document.querySelector('.form-panel').scrollTop = 0;
+  showToast('已加载配置，修改后保存即可更新', 'success');
+}
+
+// ====== Actions ======
+function handleCancel() {
+  document.getElementById('modalTitle').textContent = '确认取消';
+  document.getElementById('modalMessage').textContent = '取消后当前填写内容将被清空，确定要取消吗？';
+  document.getElementById('confirmModal').classList.add('show');
+  document.getElementById('modalConfirmBtn').textContent = '确认取消';
+  document.getElementById('modalConfirmBtn').onclick = confirmCancel;
+}
+
+function confirmCancel() {
+  // Reset editing mode
+  editingId = null;
+  document.querySelector('.form-panel h2').textContent = '新建推广配置';
+  // Clear all
+  selectedBroker = null;
+  tags = [];
+  document.getElementById('brokerPlaceholder').style.display = 'block';
+  document.getElementById('brokerSelectedText').style.display = 'none';
+  document.getElementById('brokerSelectedText').textContent = '';
+  document.getElementById('descInput').value = '';
+  document.getElementById('charCount').textContent = '0/15';
+  document.getElementById('tagInput').value = '';
+  getChannelEls().forEach(cb => { cb.checked = false; cb.closest('.checkbox-item').classList.remove('has-error'); });
+  document.getElementById('descInput').classList.remove('error');
+  document.getElementById('tagContainer').classList.remove('error');
+  // Clear error states
+  ['brokerError','channelError','descError','tagError','timeError'].forEach(hideFieldError);
+  // Reset effective time
+  immediateEffective = true;
+  document.querySelector('input[name="effectiveType"][value="immediate"]').checked = true;
+  document.getElementById('timeSelectors').classList.add('hidden');
+  resetTimeSelectors();
+  renderTags();
+  syncPreview();
+  updatePublishBtn();
+  closeModal();
+  clearDraft();
+  showToast('已清空所有内容', 'success');
+}
+
+function handleSaveDraft() {
+  const draft = {
+    broker: selectedBroker,
+    channels: getSelectedChannels(),
+    desc: document.getElementById('descInput').value,
+    tags: tags,
+    immediateEffective: immediateEffective,
+    effectiveTime: immediateEffective ? null : { ...effectiveTime },
+    timestamp: new Date().toISOString()
+  };
+  localStorage.setItem('admin_draft', JSON.stringify(draft));
+  showToast('草稿已保存', 'success');
+}
+
+function handlePublish() {
+  if (!validateAll()) {
+    showToast('请完善必填信息后再发布', 'error');
+    highlightPreviewErrors();
+    return;
+  }
+  // Refresh preview
+  syncPreview();
+  // Show confirmation modal
+  document.getElementById('modalTitle').textContent = editingId ? '确认保存修改' : '确认发布';
+  document.getElementById('modalMessage').textContent = editingId ? '修改后的内容将覆盖原配置，确认保存吗？' : '请确认预览效果无误，发布后将立即生效。';
+  document.getElementById('confirmModal').classList.add('show');
+  document.getElementById('modalConfirmBtn').textContent = editingId ? '确认保存' : '确认发布';
+  document.getElementById('modalConfirmBtn').onclick = confirmPublish;
+}
+
+function confirmPublish() {
+  closeModal();
+  clearDraft();
+
+  const now = new Date();
+  const publishTimeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+  const config = {
+    id: editingId || Date.now().toString(),
+    broker: selectedBroker,
+    channels: getSelectedChannels(),
+    desc: document.getElementById('descInput').value,
+    tags: tags,
+    effectiveTime: immediateEffective ? '立即生效' : `${effectiveTime.year}-${effectiveTime.month}-${effectiveTime.day} ${effectiveTime.hour}:${String(effectiveTime.minute).padStart(2,'0')}`,
+    publishTime: publishTimeStr
+  };
+
+  if (editingId) {
+    // Update existing config
+    const idx = publishedConfigs.findIndex(c => c.id === editingId);
+    if (idx !== -1) {
+      publishedConfigs[idx] = config;
+      showToast('配置已更新', 'success');
+    }
+    editingId = null;
+    document.querySelector('.form-panel h2').textContent = '新建推广配置';
+  } else {
+    // Add new config
+    publishedConfigs.push(config);
+    showToast('配置已发布，页面实时生效', 'success');
+  }
+
+  savePublishedConfigs();
+  renderPublishedList();
+  console.log('发布配置:', config);
+
+  // Reset form after publish
+  resetForm();
+}
+
+function resetForm() {
+  selectedBroker = null;
+  tags = [];
+  document.getElementById('brokerPlaceholder').style.display = 'block';
+  document.getElementById('brokerSelectedText').style.display = 'none';
+  document.getElementById('brokerSelectedText').textContent = '';
+  document.getElementById('descInput').value = '';
+  document.getElementById('charCount').textContent = '0/15';
+  document.getElementById('tagInput').value = '';
+  getChannelEls().forEach(cb => { cb.checked = false; });
+  document.getElementById('descInput').classList.remove('error');
+  document.getElementById('tagContainer').classList.remove('error');
+  ['brokerError','channelError','descError','tagError','timeError'].forEach(hideFieldError);
+  // Reset effective time
+  immediateEffective = true;
+  document.querySelector('input[name="effectiveType"][value="immediate"]').checked = true;
+  document.getElementById('timeSelectors').classList.add('hidden');
+  resetTimeSelectors();
+  renderTags();
+  syncPreview();
+  updatePublishBtn();
+}
+
+function handleBack() {
+  showToast('返回配置管理列表', 'success');
+}
+
+// ====== Modal ======
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('show');
+}
+
+// ====== Draft ======
+function saveDraftToStorage() {
+  const draft = {
+    broker: selectedBroker,
+    channels: getSelectedChannels(),
+    desc: document.getElementById('descInput').value,
+    tags: tags,
+    immediateEffective: immediateEffective,
+    effectiveTime: immediateEffective ? null : { ...effectiveTime }
+  };
+  localStorage.setItem('admin_draft', JSON.stringify(draft));
+}
+
+function loadDraft() {
+  const raw = localStorage.getItem('admin_draft');
+  if (!raw) return;
+  try {
+    const draft = JSON.parse(raw);
+    if (draft.broker) {
+      selectBroker(draft.broker);
+    }
+    if (draft.channels && draft.channels.length > 0) {
+      getChannelEls().forEach(cb => {
+        if (draft.channels.includes(cb.value)) cb.checked = true;
+      });
+    }
+    if (draft.desc) {
+      const inp = document.getElementById('descInput');
+      inp.value = draft.desc;
+      document.getElementById('charCount').textContent = draft.desc.length + '/15';
+    }
+    if (draft.tags && draft.tags.length > 0) {
+      tags = draft.tags;
+      renderTags();
+    }
+    if (draft.immediateEffective !== undefined && draft.immediateEffective === false && draft.effectiveTime) {
+      immediateEffective = false;
+      document.querySelector('input[name="effectiveType"][value="manual"]').checked = true;
+      document.getElementById('timeSelectors').classList.remove('hidden');
+      effectiveTime = { ...draft.effectiveTime };
+      restoreTimeSelectors();
+    }
+    syncPreview();
+    updatePublishBtn();
+    showToast('已恢复上次草稿', 'success');
+  } catch(e) {}
+}
+
+function clearDraft() {
+  localStorage.removeItem('admin_draft');
+}
+
+// ====== Toast ======
+function showToast(msg, type) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast ' + (type || '');
+  toast.classList.add('show');
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2000);
+}
+
+// ====== Helpers ======
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ====== Global click to close dropdown ======
+document.addEventListener('click', function(e) {
+  if (isDropdownOpen) {
+    const wrapper = document.getElementById('brokerSelectWrapper');
+    if (!wrapper.contains(e.target)) {
+      closeDropdown();
+    }
+  }
+  // Close modal on overlay click
+  if (e.target.id === 'confirmModal') {
+    closeModal();
+  }
+});
+
+// ====== Start ======
+init();
+</script>
+</body>
+</html>
